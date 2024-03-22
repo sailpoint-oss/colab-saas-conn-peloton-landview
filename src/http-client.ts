@@ -1,8 +1,5 @@
 import { ConnectorError, StdTestConnectionOutput, logger } from '@sailpoint/connector-sdk'
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
-import { Group } from './model/group'
-import { readConfig } from '@sailpoint/connector-sdk'
-import { Account } from './model/account'
 
 export class HTTPClient {
     private readonly api_key?: string
@@ -32,7 +29,7 @@ export class HTTPClient {
         }
         return endpoint
     }
-
+    //Retrieves all user accounts from sys_user table (using pagination)
     async getAccounts(): Promise<AxiosResponse> {
         const api_key = this.api_key
 
@@ -59,6 +56,7 @@ export class HTTPClient {
         return response
     }
 
+    //Retrieves an account from the sys_user table using the supplied account id
     async getAccount(id: string): Promise<AxiosResponse> {
         const api_key = this.api_key
         let request: AxiosRequestConfig = {
@@ -76,6 +74,25 @@ export class HTTPClient {
         return response
     }
 
+    //Runs a query against the sys_user table to see if a user account already exists
+    async queryAccount(email_address: string): Promise<AxiosResponse> {
+        const api_key = this.api_key
+        let request: AxiosRequestConfig = {
+            method: 'get',
+            baseURL: this.getEndpoint('user'),
+            url: `?email_address=${email_address}`,
+            headers: {
+                Authorization: `Bearer ${api_key}`,
+                Accept: 'application/json',
+            },
+        }
+
+        let response = await axios(request)
+
+        return response
+    }
+
+    //Creates new account in sys_user table
     async createAccount(user: object): Promise<AxiosResponse> {
         const api_key = this.api_key
         let request: AxiosRequestConfig = {
@@ -94,6 +111,7 @@ export class HTTPClient {
 
     }
 
+    //Updates user status attribute to either 'I' (inactive) or 'A' (active)
     async changeAccountStatus(userId: string,userStatus: string): Promise<AxiosResponse> {
         const api_key = this.api_key
         let request: AxiosRequestConfig = {
@@ -115,6 +133,7 @@ export class HTTPClient {
 
     }
 
+    //Adds user to a group by inserting record into user_group table
     async assignUserGroup(userId: string, groupId: string): Promise<AxiosResponse> {
         const api_key = this.api_key
         let request: AxiosRequestConfig = {
@@ -148,6 +167,7 @@ export class HTTPClient {
         }
     }
 
+    //Used to find if user is a member of a specific group so they can be removed or so a duplicate add request can be avoided
     async getUserGroupRel(userId: string, groupId: string): Promise<AxiosResponse> {
         const api_key = this.api_key
         let request: AxiosRequestConfig = {
@@ -169,6 +189,7 @@ export class HTTPClient {
         return response
     }
 
+    //Deletes record from user_group table to remove user from a specific group
     async removeUserGroup(userId: string, groupId: string): Promise<AxiosResponse> {
         const api_key = this.api_key
         let request: AxiosRequestConfig = {
@@ -190,6 +211,7 @@ export class HTTPClient {
         return response
     }
 
+    //Used to find all user group memberships from user_group table
     async getUserGroups(id: string): Promise<AxiosResponse> {
         const api_key = this.api_key
 
@@ -208,6 +230,7 @@ export class HTTPClient {
         return response
     }
 
+    //Used to aggregate groups as entitlements by querying the sys_group table
     async getGroups(): Promise<AxiosResponse> {
         const api_key = this.api_key
 
@@ -234,6 +257,8 @@ export class HTTPClient {
 
         return response
     }
+    
+    //Used to find metadata about specific group for get entitlement action
     async getGroup(id: string): Promise<AxiosResponse> {
         const api_key = this.api_key
         let request: AxiosRequestConfig = {
