@@ -12,7 +12,7 @@
 [contributor-shield]:https://img.shields.io/github/contributors/sailpoint-oss/colab-saas-conn-peloton-landview?label=Contributors
 [contributors-url]:https://github.com/sailpoint-oss/colab-saas-conn-peloton-landview/graphs/contributors
 
-# application-title-here
+# Peloton Landview Connector
 [Explore the docs »](https://developer.sailpoint.com/discuss/t/peloton-landview-connector/37358)
 
 [New to the CoLab? Click here »](https://developer.sailpoint.com/discuss/t/about-the-sailpoint-developer-community-colab/11230)
