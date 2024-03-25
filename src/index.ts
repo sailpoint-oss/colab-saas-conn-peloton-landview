@@ -4,7 +4,6 @@ import {
     ConnectorError,
     createConnector,
     readConfig,
-    logger,
     Response,
     StdAccountCreateInput,
     StdAccountCreateOutput,
@@ -29,6 +28,8 @@ import {
 import { HTTPClient } from './http-client'
 import { Account } from './model/account'
 import { Group } from './model/group'
+import { Permission } from './model/permission'
+import {logger} from './tools/logger'
 
 // Connector must be exported as module property named connector
 export const connector = async () => {
@@ -48,6 +49,27 @@ export const connector = async () => {
         account.attributes.groups = groups
 
         return account
+    }
+    const readGroup = async (id: string): Promise<Group> => {
+        const group_response: AxiosResponse = await httpClient.getGroup(id)
+        const group: Group = new Group (group_response.data.data[0])
+
+        const group_permissions_response: AxiosResponse = await httpClient.getGroupPermissions(id)
+        const permissions = group_permissions_response.data.data.map((x: { permission_id: any }) => x.permission_id.toString())
+        group.attributes.permissions = permissions
+
+        return group
+    }
+
+    const readPermission = async (id: string): Promise<Permission> => {
+        const permission_response: AxiosResponse = await httpClient.getPermission(id)
+        const permission: Permission = new Permission (permission_response.data.data[0])
+
+        const permission_groups_response: AxiosResponse = await httpClient.getPermissionGroups(id)
+        const groups = permission_groups_response.data.data.map((x: { group_id: any }) => x.group_id.toString())
+        permission.attributes.groups = groups
+
+        return permission
     }
 
     const assignUserGroup = async (account: Account, group: string) => {
@@ -70,11 +92,11 @@ export const connector = async () => {
 
     return createConnector()
         .stdTestConnection(async (context: Context, input: StdTestConnectionInput, res: Response<StdTestConnectionOutput>) => {
-            logger.info("std:test-connection - Running test connection")
+            logger.info('Running test connection')
             res.send(await httpClient.testConnection())
         })
         .stdAccountList(async (context: Context, input: StdAccountListInput, res: Response<StdAccountListOutput>) => {
-            logger.info('std:account:list')
+            logger.info('Reading accounts from LandView')
             const accounts: AxiosResponse = await httpClient.getAccounts()
 
             for (const acc of accounts.data) {
@@ -85,27 +107,27 @@ export const connector = async () => {
 
         })
         .stdAccountRead(async (context: Context, input: StdAccountReadInput, res: Response<StdAccountReadOutput>) => {
-            logger.info(`std:account:read: Reading account with Id - ${input.identity}`)
+            logger.info(`Reading account with Id - ${input.identity}`)
             const account = await readAccount(input.identity)
             res.send(account)
         })
         .stdAccountCreate(
             async (context: Context, input: StdAccountCreateInput, res: Response<StdAccountCreateOutput>) => {
-                logger.info(`std:account:create - ${input}`)
+                logger.info(`${input}`)
                 let account
 
                 //Checks to see if account already exists, in case it was created outside of IdN in between aggregations
                 const account_query = await httpClient.queryAccount(input.attributes.email_address)
                 if (account_query.data.header.dataRows > 0) {
                     account = await readAccount(account_query.data.user_id)
-                    logger.info(`std:account:create - a new account for ${input.attributes.full_name} will not be created because
+                    logger.info(`A new account for ${input.attributes.full_name} will not be created because
                     an existing account was found with the same email address - account id is ${account.attributes.user_id}`)
                 }
                 else {
                     const user = { ...input.attributes, ...{ groups: undefined } }
                     const account_response = await httpClient.createAccount(user)
                     account = await readAccount(account_response.data.user_id)
-                    logger.info(`std:account:create - New Account Created for ${input.attributes.full_name} - account id is ${account.identity}`)
+                    logger.info(`New Account Created for ${input.attributes.full_name} - account id is ${account.identity}`)
                 }
 
                 res.send(account)
@@ -113,7 +135,7 @@ export const connector = async () => {
         )
         .stdAccountEnable(async (context: Context, input: StdAccountEnableInput, res: Response<StdAccountEnableOutput>) => {
             const account = await readAccount(input.identity)
-            logger.debug(`std:account:enable - Sending account enable request for ${account.attributes.full_name}`)
+            logger.debug(`Sending account enable request for ${account.attributes.full_name}`)
             
             await httpClient.changeAccountStatus(input.identity, 'A')
             
@@ -121,14 +143,14 @@ export const connector = async () => {
         })
         .stdAccountDisable(async (context: Context, input: StdAccountDisableInput, res: Response<StdAccountDisableOutput>) => {
             const account = await readAccount(input.identity)
-            logger.debug(`std:account:disable - Sending account disable request for ${account.attributes.full_name}`)
+            logger.debug(`Sending account disable request for ${account.attributes.full_name}`)
             
             await httpClient.changeAccountStatus(input.identity, 'I')
             
             res.send(await readAccount(input.identity))
         })
         .stdAccountUpdate(async (context: Context, input: StdAccountUpdateInput, res: Response<StdAccountUpdateOutput>) => {
-            logger.info(`std:account:update - ${input}`)
+            logger.info(`${input}`)
 
             for (let change of input.changes) {
                 const values = [].concat(change.value)
@@ -136,11 +158,11 @@ export const connector = async () => {
                     const account = await readAccount(input.identity)
                     switch (change.op) {
                         case AttributeChangeOp.Add:
-                            logger.info(`std:account:update - Sending provisioning request for ${account.attributes.full_name} to group id ${value}`)
+                            logger.info(`Sending provisioning request for ${account.attributes.full_name} to group id ${value}`)
                             await assignUserGroup(account, value)
                             break
                         case AttributeChangeOp.Remove:
-                            logger.info(`std:account:update - Sending deprovisioning request for ${account.attributes.full_name} from group id ${value}`)
+                            logger.info(`Sending deprovisioning request for ${account.attributes.full_name} from group id ${value}`)
                             await removeUserGroup(account, value)
                             break
                         default:
@@ -153,20 +175,27 @@ export const connector = async () => {
             res.send(account)
         })
         .stdEntitlementList(async (context: Context, input: any, res: Response<StdEntitlementListOutput>) => {
-            logger.info('std:entitlement:list')
+            logger.info('Reading entitlements from LandView')
 
-            const response = await httpClient.getGroups()
-            for (const gr of response.data) {
-                const group = new Group(gr)
+            logger.info('Reading groups from LandView')
+            const group_response = await httpClient.getGroups()
+            for (const gr of group_response.data) {
+                const group : Group = await readGroup(gr.group_id)
 
-                logger.info(group)
                 res.send(group)
+            }
+
+            logger.info('Reading permissions from LandView')
+            const permissions_response = await httpClient.getPermissions()
+            for(const per of permissions_response.data.data){
+                const permission = await readPermission(per.permission_id)
+
+                res.send(permission)
             }
         })
         .stdEntitlementRead(async (context: Context, input: StdEntitlementReadInput, res: Response<StdEntitlementReadOutput>) => {
-            logger.debug(`std:entitlement:read - Reading entitlement with Id ${input.identity}`)
-            const group_response: AxiosResponse = await httpClient.getGroup(input.identity)
-            const group: Group = new Group(group_response.data.data[0])
+            logger.debug(`Reading entitlement with Id ${input.identity}`)
+            const group: Group = await readGroup(input.identity)
             
             res.send(group)
         })

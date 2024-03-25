@@ -79,6 +79,7 @@
             "type": "group",
             "identityAttribute": "id",
             "displayAttribute": "name",
+            "groupAttribute": "groups",
             "attributes": [
                 {
                     "name": "id",
@@ -94,6 +95,20 @@
                     "name": "description",
                     "type": "string",
                     "description": ""
+                },
+                {
+                    "name": "permissions",
+                    "type": "string",
+                    "entitlement": false,
+                    "managed": false,
+                    "multi": true
+                },
+                {
+                    "name": "groups",
+                    "type": "string",
+                    "entitlement": true,
+                    "managed": false,
+                    "multi": true
                 }
             ]
         }
