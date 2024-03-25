@@ -1,7 +1,9 @@
-import { ConnectorError, StdTestConnectionOutput, logger } from '@sailpoint/connector-sdk'
+import { ConnectorError, StdTestConnectionOutput } from '@sailpoint/connector-sdk'
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios'
+import { logger } from './tools/logger'
 
 export class HTTPClient {
+
     private readonly api_key?: string
     private base_url: string
 
@@ -25,6 +27,12 @@ export class HTTPClient {
                 break
             case 'user_group':
                 endpoint = `${base_url}/api/v1/user_group`
+                break
+            case 'sys_permission':
+                endpoint = `${base_url}/api/v1/sys_permission`
+                break
+            case 'sys_group_permission':
+                endpoint = `${base_url}/api/v1/sys_group_permission`
                 break
         }
         return endpoint
@@ -68,10 +76,26 @@ export class HTTPClient {
                 Accept: 'application/json',
             },
         }
+        return axios(request)
+            .then(response => {
+                logger.info({
+                    message: 'Account read successful',
+                    statusCode: response.status,
+                    response: response.data
+                }
+                )
+                return response
+            }).catch(error => {
 
-        let response = await axios(request)
+                logger.info({
+                    message: `Issue when trying to read account ${id}`,
+                    statusCode: error.response?.status,
+                    response: error.response?.data,
+                    stack: error.stack
+                });
 
-        return response
+                throw new ConnectorError(`Issue when trying to read account ${id} - ${error.response?.status} - ${error.response?.data}`)
+            })
     }
 
     //Runs a query against the sys_user table to see if a user account already exists
@@ -87,9 +111,26 @@ export class HTTPClient {
             },
         }
 
-        let response = await axios(request)
+        return axios(request)
+            .then(response => {
+                logger.info({
+                    message: 'Account query successful',
+                    statusCode: response.status,
+                    response: response.data
+                }
+                )
+                return response
+            }).catch(error => {
 
-        return response
+                logger.info({
+                    message: `Issue when trying to query account ${email_address}`,
+                    statusCode: error.response?.status,
+                    response: error.response?.data,
+                    stack: error.stack
+                });
+
+                throw new ConnectorError(`Issue when trying to read account ${email_address} - ${error.response?.status} - ${error.response?.data}`)
+            })
     }
 
     //Creates new account in sys_user table
@@ -105,14 +146,31 @@ export class HTTPClient {
             data: user
         }
 
-        let response = await axios(request)
+        return axios(request)
+            .then(response => {
+                logger.info({
+                    message: 'Account create successful',
+                    statusCode: response.status,
+                    response: response.data
+                }
+                )
+                return response
+            }).catch(error => {
 
-        return response
+                logger.info({
+                    message: `Issue when trying to create account`,
+                    statusCode: error.response?.status,
+                    response: error.response?.data,
+                    stack: error.stack
+                });
+
+                throw new ConnectorError(`Issue when trying to create account - ${error.response?.status} - ${error.response?.data}`)
+            })
 
     }
 
     //Updates user status attribute to either 'I' (inactive) or 'A' (active)
-    async changeAccountStatus(userId: string,userStatus: string): Promise<AxiosResponse> {
+    async changeAccountStatus(userId: string, userStatus: string): Promise<AxiosResponse> {
         const api_key = this.api_key
         let request: AxiosRequestConfig = {
             method: 'put',
@@ -127,9 +185,26 @@ export class HTTPClient {
             }
         }
 
-        let response = await axios(request)
+        return axios(request)
+            .then(response => {
+                logger.info({
+                    message: 'Account state change successful',
+                    statusCode: response.status,
+                    response: response.data
+                }
+                )
+                return response
+            }).catch(error => {
 
-        return response
+                logger.info({
+                    message: `Issue when trying to change account state`,
+                    statusCode: error.response?.status,
+                    response: error.response?.data,
+                    stack: error.stack
+                });
+
+                throw new ConnectorError(`Issue when trying to change account state - ${error.response?.status} - ${error.response?.data}`)
+            })
 
     }
 
@@ -149,22 +224,26 @@ export class HTTPClient {
             }
         }
 
-        try {
-            let response = await axios(request)
-            return response
-        } catch (error) {
-            if (axios.isAxiosError(error)) {
-                logger.error({
-                    message: `Error occurred while processing request - ${error.response?.data?.error}`,
-                    baseURL: error.config?.baseURL,
-                    url: error.config?.url,
-                    requestData: error.config?.data,
-                })
-                throw new Error(`Error assigning user group: ${error.response?.data.error}`)
-            } else {
-                throw error;
-            }
-        }
+        return axios(request)
+            .then(response => {
+                logger.info({
+                    message: 'Account provisioning successful',
+                    statusCode: response.status,
+                    response: response.data
+                }
+                )
+                return response
+            }).catch(error => {
+
+                logger.info({
+                    message: `Issue when trying to provision account`,
+                    statusCode: error.response?.status,
+                    response: error.response?.data,
+                    stack: error.stack
+                });
+
+                throw new ConnectorError(`Issue when trying to provision account - ${error.response?.status} - ${error.response?.data}`)
+            })
     }
 
     //Used to find if user is a member of a specific group so they can be removed or so a duplicate add request can be avoided
@@ -206,9 +285,26 @@ export class HTTPClient {
             }
         }
 
-        let response = await axios(request)
+        return axios(request)
+            .then(response => {
+                logger.info({
+                    message: 'Account provisioning successful',
+                    statusCode: response.status,
+                    response: response.data
+                }
+                )
+                return response
+            }).catch(error => {
 
-        return response
+                logger.info({
+                    message: `Issue when trying to provision account`,
+                    statusCode: error.response?.status,
+                    response: error.response?.data,
+                    stack: error.stack
+                });
+
+                throw new ConnectorError(`Issue when trying to provision account - ${error.response?.status} - ${error.response?.data}`)
+            })
     }
 
     //Used to find all user group memberships from user_group table
@@ -225,9 +321,26 @@ export class HTTPClient {
             },
         }
 
-        let response = await axios(request)
+        return axios(request)
+            .then(response => {
+                logger.info({
+                    message: 'User group retrieval successful',
+                    statusCode: response.status,
+                    response: response.data
+                }
+                )
+                return response
+            }).catch(error => {
 
-        return response
+                logger.info({
+                    message: `Issue when trying to retrieve user groups`,
+                    statusCode: error.response?.status,
+                    response: error.response?.data,
+                    stack: error.stack
+                });
+
+                throw new ConnectorError(`Issue when trying to retrieve user groups - ${error.response?.status} - ${error.response?.data}`)
+            })
     }
 
     //Used to aggregate groups as entitlements by querying the sys_group table
@@ -257,7 +370,7 @@ export class HTTPClient {
 
         return response
     }
-    
+
     //Used to find metadata about specific group for get entitlement action
     async getGroup(id: string): Promise<AxiosResponse> {
         const api_key = this.api_key
@@ -271,9 +384,160 @@ export class HTTPClient {
             },
         }
 
-        let response = await axios(request)
+        return axios(request)
+            .then(response => {
+                logger.info({
+                    message: 'Group retrieval successful',
+                    statusCode: response.status,
+                    response: response.data
+                }
+                )
+                return response
+            }).catch(error => {
 
-        return response
+                logger.info({
+                    message: `Issue when trying to retrieve group`,
+                    statusCode: error.response?.status,
+                    response: error.response?.data,
+                    stack: error.stack
+                });
+
+                throw new ConnectorError(`Issue when trying to retrieve group - ${error.response?.status} - ${error.response?.data}`)
+            })
+    }
+
+    async getGroupPermissions(id: string): Promise<AxiosResponse> {
+        const api_key = this.api_key
+        let request: AxiosRequestConfig = {
+            method: 'get',
+            baseURL: this.getEndpoint('sys_group_permission'),
+            url: `?group_id=${id}`,
+            headers: {
+                Authorization: `Bearer ${api_key}`,
+                Accept: 'application/json',
+            },
+        }
+
+        return axios(request)
+            .then(response => {
+                logger.info({
+                    message: 'Group permissions retrieval successful',
+                    statusCode: response.status,
+                    response: response.data
+                }
+                )
+                return response
+            }).catch(error => {
+
+                logger.info({
+                    message: `Issue when trying to retrieve group permissions`,
+                    statusCode: error.response?.status,
+                    response: error.response?.data,
+                    stack: error.stack
+                });
+
+                throw new ConnectorError(`Issue when trying to retrieve group permissions - ${error.response?.status} - ${error.response?.data}`)
+            })
+    }
+
+    async getPermissions(): Promise<AxiosResponse> {
+        const api_key = this.api_key
+        let request: AxiosRequestConfig = {
+            method: 'get',
+            baseURL: this.getEndpoint('sys_permission'),
+            headers: {
+                Authorization: `Bearer ${api_key}`,
+                Accept: 'application/json',
+            },
+        }
+
+        return axios(request)
+            .then(response => {
+                logger.info({
+                    message: 'Permission retrieval successful',
+                    statusCode: response.status,
+                    response: response.data
+                }
+                )
+                return response
+            }).catch(error => {
+
+                logger.info({
+                    message: `Issue when trying to retrieve permission`,
+                    statusCode: error.response?.status,
+                    response: error.response?.data,
+                    stack: error.stack
+                });
+
+                throw new ConnectorError(`Issue when trying to retrieve permission - ${error.response?.status} - ${error.response?.data}`)
+            })
+    }
+
+    async getPermission(id: string): Promise<AxiosResponse> {
+        const api_key = this.api_key
+        let request: AxiosRequestConfig = {
+            method: 'get',
+            baseURL: this.getEndpoint('sys_permission'),
+            url: `/${id}`,
+            headers: {
+                Authorization: `Bearer ${api_key}`,
+                Accept: 'application/json',
+            },
+        }
+
+        return axios(request)
+            .then(response => {
+                logger.info({
+                    message: 'Permission retrieval successful',
+                    statusCode: response.status,
+                    response: response.data
+                }
+                )
+                return response
+            }).catch(error => {
+
+                logger.info({
+                    message: `Issue when trying to retrieve permission`,
+                    statusCode: error.response?.status,
+                    response: error.response?.data,
+                    stack: error.stack
+                });
+
+                throw new ConnectorError(`Issue when trying to retrieve permission - ${error.response?.status} - ${error.response?.data}`)
+            })
+    }
+    async getPermissionGroups(id: string): Promise<AxiosResponse> {
+        const api_key = this.api_key
+        let request: AxiosRequestConfig = {
+            method: 'get',
+            baseURL: this.getEndpoint('sys_group_permission'),
+            url: `?permission_id=${id}`,
+            headers: {
+                Authorization: `Bearer ${api_key}`,
+                Accept: 'application/json',
+            },
+        }
+
+        return axios(request)
+            .then(response => {
+                logger.info({
+                    message: 'Permission group retrieval successful',
+                    statusCode: response.status,
+                    response: response.data
+                }
+                )
+                return response
+            }).catch(error => {
+
+                logger.info({
+                    message: `Issue when trying to retrieve permission groups`,
+                    statusCode: error.response?.status,
+                    response: error.response?.data,
+                    stack: error.stack
+                });
+
+                throw new ConnectorError(`Issue when trying to retrieve permission groups - ${error.response?.status} - ${error.response?.data}`)
+            })
     }
 
     async testConnection(): Promise<StdTestConnectionOutput> {
@@ -286,11 +550,24 @@ export class HTTPClient {
                 Authorization: `Bearer ${api_key}`,
             },
         }
-        let response = await axios(request)
-        if (response.status !== 200 || !response.data.header) {
-            throw new ConnectorError('Unable to connect to LandView')
-        }
+        return axios(request)
+            .then(response => {
+                logger.info({
+                    message: 'Test connection succeeded',
+                    statusCode: response.status
+                }
+                )
+                return {}
+            }).catch(error => {
 
-        return {}
+                logger.info({
+                    message: 'Issue when trying to connect to LandView',
+                    statusCode: error.response?.status,
+                    response: error.response?.data,
+                    stack: error.stack
+                });
+
+                throw new ConnectorError(`Issue when trying to connect to LandView - ${error.response?.status} - ${error.response?.data}`)
+            })
     }
 }
