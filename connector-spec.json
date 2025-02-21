@@ -45,7 +45,7 @@
 		}
 	],
 	"accountSchema":{
-		"displayAttribute": "full_name",
+		"displayAttribute": "email_address",
 		"identityAttribute": "user_id",
         "groupAttribute": "groups",
 		"attributes":[

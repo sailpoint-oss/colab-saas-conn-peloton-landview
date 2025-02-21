@@ -13,11 +13,11 @@ export class Account {
             status: object.status,
             user_name: object.user_name,
             full_name: object.full_name,
-            email_address: object.email_address,
+            email_address: object.email_address?.toString() ?? `${object.user_name}@peloton.com`,
             groups: object.groups
         }
         this.identity = this.attributes.user_id?.toString() as string
-        this.uuid = this.attributes.user_name as string
+        this.uuid = this.attributes.email_address?.toString() as string
         this.disabled = (object.status === "I") ? true : false
     }
 }
