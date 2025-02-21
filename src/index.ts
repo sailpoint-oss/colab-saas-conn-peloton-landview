@@ -164,7 +164,7 @@ export const connector = async () => {
             const account = await readAccount(input.identity)
             logger.debug(`Sending account disable request for ${account.attributes.full_name}`)
             
-            await httpClient.updateUser(input.identity, {"status": "A"})
+            await httpClient.updateUser(input.identity, {"status": "I"})
             
             res.send(await readAccount(input.identity))
         })
