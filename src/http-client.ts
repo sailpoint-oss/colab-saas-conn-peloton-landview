@@ -170,7 +170,7 @@ export class HTTPClient {
     }
 
     //Updates user status attribute to either 'I' (inactive) or 'A' (active)
-    async changeAccountStatus(userId: string, userStatus: string): Promise<AxiosResponse> {
+    async updateUser(userId: string, requestBody: object): Promise<AxiosResponse> {
         const api_key = this.api_key
         let request: AxiosRequestConfig = {
             method: 'put',
@@ -180,9 +180,7 @@ export class HTTPClient {
                 Authorization: `Bearer ${api_key}`,
                 Accept: 'application/json',
             },
-            data: {
-                status: userStatus
-            }
+            data: requestBody
         }
 
         return axios(request)

@@ -127,6 +127,25 @@ export const connector = async () => {
                     const user = { ...input.attributes, ...{ groups: undefined } }
                     const account_response = await httpClient.createAccount(user)
                     account = await readAccount(account_response.data.user_id)
+
+                    if (input.attributes.groups) {
+                        if (Array.isArray(input.attributes.groups)) {
+                            for (const group of input.attributes.groups) {
+    
+                                await assignUserGroup(account,group)
+                            }
+                        } else if (typeof input.attributes.groups === 'string') {
+                            const change: AttributeChange = {
+                                op: AttributeChangeOp.Add,
+                                attribute: 'safeRoles',
+                                value: input.attributes.safeRoles,
+                            }
+    
+                            await assignUserGroup(account,input.attributes.groups)
+                        }
+                    }
+
+                    account = await readAccount(account_response.data.user_id)
                     logger.info(`New Account Created for ${input.attributes.full_name} - account id is ${account.identity}`)
                 }
 
@@ -137,7 +156,7 @@ export const connector = async () => {
             const account = await readAccount(input.identity)
             logger.debug(`Sending account enable request for ${account.attributes.full_name}`)
             
-            await httpClient.changeAccountStatus(input.identity, 'A')
+            await httpClient.updateUser(input.identity, {"status": "A"})
             
             res.send(await readAccount(input.identity))
         })
@@ -145,7 +164,7 @@ export const connector = async () => {
             const account = await readAccount(input.identity)
             logger.debug(`Sending account disable request for ${account.attributes.full_name}`)
             
-            await httpClient.changeAccountStatus(input.identity, 'I')
+            await httpClient.updateUser(input.identity, {"status": "I"})
             
             res.send(await readAccount(input.identity))
         })
